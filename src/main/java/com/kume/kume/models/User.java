@@ -1,6 +1,5 @@
 package com.kume.kume.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.annotation.Generated;
 import jakarta.persistence.Column;
@@ -43,6 +42,5 @@ public class User {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Role role;
 }

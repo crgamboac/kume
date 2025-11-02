@@ -11,4 +11,11 @@ public class GenericResponse<T> {
     private boolean success;
     private String message;
     private T data;
+
+    public static <T> GenericResponse<T> success(String message, T data) {
+        return new GenericResponse<>(true, message, data);
+    }
+    public static <T> GenericResponse<T> failure(String message) {
+        return new GenericResponse<>(false, message, null);
+    }
 }

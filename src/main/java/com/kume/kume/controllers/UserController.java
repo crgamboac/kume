@@ -1,5 +1,9 @@
 package com.kume.kume.controllers;
 import com.kume.kume.dto.GenericResponse;
+import com.kume.kume.dto.UserDto;
+import com.kume.kume.mappers.RoleMapper;
+import com.kume.kume.mappers.UserMapper;
+import com.kume.kume.models.Role;
 import com.kume.kume.models.User;
 import com.kume.kume.repositories.RoleRepository;
 import com.kume.kume.repositories.UserRepository;
@@ -24,34 +28,34 @@ public class UserController {
 
     
     @GetMapping
-    public ResponseEntity<GenericResponse<List<User>>> getAll() {
+    public ResponseEntity<GenericResponse<List<UserDto>>> getAll() {
         List<User> users = userRepository.findAll();
-        return ResponseEntity.ok(new GenericResponse<>(true, "Usuarios obtenidos correctamente", users));
+        return ResponseEntity.ok( GenericResponse.success( "Usuarios obtenidos correctamente", users.stream().map(UserMapper::toDto).toList()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GenericResponse<User>> getById(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> getById(@PathVariable Long id) {
         Optional<User> user = userRepository.findById(id);
         if (user.isEmpty()) {
             return ResponseEntity
                     .status(404)
                     .body(new GenericResponse<>(false, "Usuario no encontrado", null));
         }
-        return ResponseEntity.ok(new GenericResponse<>(true, "Usuario encontrado", user.get()));
+        return ResponseEntity.ok( GenericResponse.success( "Usuario encontrado", UserMapper.toDto(user.get())));
     }
 
     @PostMapping
-    public ResponseEntity<GenericResponse<User>> create(@RequestBody User user) {
+    public ResponseEntity<GenericResponse<UserDto>> create(@RequestBody UserDto user) {
         if (userRepository.existsByEmail(user.getEmail())) {
             return ResponseEntity
                     .badRequest()
-                    .body(new GenericResponse<>(false, "El correo ya está registrado.", null));
+                    .body( GenericResponse.failure( "El correo ya está registrado."));
         }
 
         if (user.getRole() == null || user.getRole().getId() == null) {
             return ResponseEntity
                     .badRequest()
-                    .body(new GenericResponse<>(false, "Debe especificar un rol válido.", null));
+                    .body( GenericResponse.failure( "Debe especificar un rol válido."));
         }
 
         var role = roleRepository.findById(user.getRole().getId())
@@ -60,33 +64,33 @@ public class UserController {
         if (role == null) {
             return ResponseEntity
                     .badRequest()
-                    .body(new GenericResponse<>(false, "Rol no encontrado.", null));
+                    .body( GenericResponse.failure( "Rol no encontrado."));
         }
 
-        user.setRole(role);
-        User saved = userRepository.save(user);
+        User newUser = UserMapper.toEntity(user);
+        newUser.setRole(role);
+        User saved = userRepository.save(newUser);
         return ResponseEntity
-                .ok(new GenericResponse<>(true, "Usuario creado exitosamente", saved));
+                .ok( GenericResponse.success( "Usuario creado exitosamente", UserMapper.toDto(saved)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GenericResponse<User>> update(@PathVariable Long id, @RequestBody User updatedUser) {
+    public ResponseEntity<GenericResponse<UserDto>> update(@PathVariable Long id, @RequestBody UserDto updatedUser) {
         Optional<User> existing = userRepository.findById(id);
 
         if (existing.isEmpty()) {
             return ResponseEntity
                     .status(404)
-                    .body(new GenericResponse<>(false, "Usuario no encontrado", null));
+                    .body(GenericResponse.failure( "Usuario no encontrado"));
         }
 
         User user = existing.get();
         user.setFull_name(updatedUser.getFull_name());
         user.setEmail(updatedUser.getEmail());
-        user.setPassword(updatedUser.getPassword());
-        user.setRole(updatedUser.getRole());
+        user.setRole(RoleMapper.toEntity(updatedUser.getRole()));
 
         User saved = userRepository.save(user);
-        return ResponseEntity.ok(new GenericResponse<>(true, "Usuario actualizado correctamente", saved));
+        return ResponseEntity.ok( GenericResponse.success("Usuario actualizado correctamente", UserMapper.toDto(saved)));
     }
 
     @DeleteMapping("/{id}")
@@ -94,10 +98,10 @@ public class UserController {
         if (!userRepository.existsById(id)) {
             return ResponseEntity
                     .status(404)
-                    .body(new GenericResponse<>(false, "Usuario no encontrado", null));
+                    .body( GenericResponse.failure("Usuario no encontrado"));
         }
         userRepository.deleteById(id);
-        return ResponseEntity.ok(new GenericResponse<>(true, "Usuario eliminado correctamente", null));
+        return ResponseEntity.ok(GenericResponse.success("Usuario eliminado correctamente", null));
     }
 
 }
