@@ -1,6 +1,5 @@
 package com.kume.kume.config;
 
-import com.kume.kume.auth.JwtTokenUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

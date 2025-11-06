@@ -1,4 +1,4 @@
-package com.kume.kume.auth;
+package com.kume.kume.config;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
