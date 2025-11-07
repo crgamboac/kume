@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Recetas Detalladas (Privado)</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header>
+        <h1 sec:authentication="name">Bienvenido, Usuario Autenticado!</h1>
+        <nav>
+            <a th:href="@{/home}">Inicio</a>
+            <a th:href="@{auth/logout}">Cerrar Sesión</a>
+        </nav>
+    </header>
+    <main>
+        <h2>Acceso a Detalles de Recetas (Ruta Privada)</h2>
+        <p>Esta página solo es visible después de iniciar sesión con éxito.</p>
+    </main>
+</body>
+</html>
