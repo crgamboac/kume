@@ -1,6 +1,5 @@
 package com.kume.kume.presentation.controllers;
 
-
 import com.kume.kume.application.dto.recipe.CreateRecipeRequest;
 import com.kume.kume.application.dto.recipe.UpdateRecipeRequest;
 import com.kume.kume.application.dto.recipe.RecipeResponse;
@@ -18,9 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 import java.util.Map;
 
-
 import org.springframework.web.bind.annotation.GetMapping;
-
 
 @Controller
 @RequestMapping("/recipes") // Prefijo para todas las rutas del CRUD
@@ -33,22 +30,22 @@ public class RecipeController {
     }
 
     // --- Rutas Públicas (Listado y Búsqueda) ---
-    
+
     /**
      * [Pública] Mapea la URL de BÚSQUEDA/LISTADO.
      * Cumple con el requisito de 'Buscar recetas'.
      */
-    @GetMapping({"/search", "/list"}) 
+    @GetMapping({ "/search", "/list" })
     public String listRecipes(@RequestParam(value = "query", required = false) String query, Model model) {
-        
+
         List<RecipeResponse> recipes;
-        
+
         if (query != null && !query.isEmpty()) {
             recipes = recipeService.getRecipeByName(query).getData();
         } else {
             recipes = recipeService.getAllRecipes().getData();
         }
-        
+
         model.addAttribute("recipes", recipes);
         model.addAttribute("query", query);
         return "recipe/recipe-list";
@@ -56,16 +53,17 @@ public class RecipeController {
 
     /**
      * [Privada] Mapea la URL para VER DETALLES. Requiere autenticación.
-     * Cumple con el requisito de 'Visualizar las recetas para tener acceso a los detalles'.
+     * Cumple con el requisito de 'Visualizar las recetas para tener acceso a los
+     * detalles'.
      */
-    @GetMapping("/{id}/details") 
+    @GetMapping("/{id}/details")
     public String viewRecipeDetails(@PathVariable("id") Long id, Model model) {
         RecipeResponse recipe = recipeService.getRecipeById(id)
                 .getData(); // Asume que .getData() maneja el Optional y lanza una excepción si falla
 
         if (recipe == null) {
             // Manejo de error básico (no encontrado)
-            return "redirect:/recetas/listado"; 
+            return "redirect:/recetas/listado";
         }
 
         model.addAttribute("recipe", recipe);
@@ -88,9 +86,9 @@ public class RecipeController {
      * Procesa la solicitud POST para crear una receta.
      */
     @PostMapping("/create")
-    public String createRecipe(@Valid @ModelAttribute("recipeRequest") CreateRecipeRequest request, 
-                               BindingResult result,
-                               RedirectAttributes redirectAttributes) {
+    public String createRecipe(@Valid @ModelAttribute("recipeRequest") CreateRecipeRequest request,
+            BindingResult result,
+            RedirectAttributes redirectAttributes) {
 
         if (result.hasErrors()) {
             // Si hay errores de validación, vuelve al formulario
@@ -108,9 +106,9 @@ public class RecipeController {
     @GetMapping("/{id}/update")
     public String showEditForm(@PathVariable("id") Long id, Model model) {
         RecipeResponse recipe = recipeService.getRecipeById(id).getData();
-        
+
         // Mapea la respuesta a la solicitud de actualización para poblar el formulario
-        UpdateRecipeRequest request = RecipeMapper.toUpdateRequest(recipe); 
+        UpdateRecipeRequest request = RecipeMapper.toUpdateRequest(recipe);
 
         model.addAttribute("recipeRequest", request);
         model.addAttribute("difficultyLevels", DifficultyLevel.values());
@@ -122,10 +120,10 @@ public class RecipeController {
      */
     @PostMapping("/{id}/update")
     public String updateRecipe(@PathVariable("id") Long id,
-                               @Valid @ModelAttribute("recipeRequest") UpdateRecipeRequest request,
-                               BindingResult result,
-                               RedirectAttributes redirectAttributes) {
-        
+            @Valid @ModelAttribute("recipeRequest") UpdateRecipeRequest request,
+            BindingResult result,
+            RedirectAttributes redirectAttributes) {
+
         if (result.hasErrors()) {
             // Si hay errores de validación, vuelve al formulario
             return "recipe/recipe-edit";
@@ -135,7 +133,7 @@ public class RecipeController {
         redirectAttributes.addFlashAttribute("successMessage", "Receta actualizada exitosamente.");
         return "redirect:/recipes/list";
     }
-    
+
     /**
      * Elimina una receta.
      */
@@ -144,6 +142,8 @@ public class RecipeController {
         recipeService.deleteRecipe(id);
         redirectAttributes.addFlashAttribute("successMessage", "Receta eliminada exitosamente.");
         return "redirect:/recipes/list";
+    }
+
     @GetMapping("/recipes")
     public String privateRecipesList(Model model) {
 
