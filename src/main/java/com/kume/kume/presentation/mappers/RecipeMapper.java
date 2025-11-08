@@ -48,5 +48,14 @@ public class RecipeMapper {
         existingRecipe.setImageUrl(request.getImageUrl());
         existingRecipe.setIngredients(request.getIngredients());
         return existingRecipe;
-    }   
+    } 
+
+    public static UpdateRecipeRequest toUpdateRequest(RecipeResponse recipe) {
+        if (recipe == null) {
+            return null;
+        }
+        return UpdateRecipeRequest.builder()
+                .name(recipe.getName())
+                .build();
+    }
 }     

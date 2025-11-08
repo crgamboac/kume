@@ -5,6 +5,8 @@ import java.util.Set;
 import com.kume.kume.infraestructure.models.DifficultyLevel;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,8 +25,10 @@ public class CreateRecipeRequest {
     private DifficultyLevel difficulty;
     @NotBlank(message = "La URL de la imagen es obligatoria")
     private String imageUrl;
-    @NotBlank(message = "Los ingredientes son obligatorios")
+    @NotNull(message = "La lista de ingredientes no debe ser nula")
+    @NotEmpty(message = "Los ingredientes son obligatorios")
     private Set<CreateRecipeIngredientRequest> ingredients;
-    @NotBlank(message = "Los pasos son obligatorios")
+    @NotNull(message = "La lista de pasos no debe ser nula")
+    @NotEmpty(message = "Los pasos son obligatorios")
     private Set<CreateStepRequest> steps;
 }

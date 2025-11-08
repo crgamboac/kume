@@ -11,6 +11,5 @@ import com.kume.kume.infraestructure.models.Ingredient;
 @Repository
 public interface IngredientRepository extends JpaRepository<Ingredient, Long> {
     Optional<Ingredient> findByName(String name);
-
     Optional<List<Ingredient>> findByingredientType(String ingredientType);
 }

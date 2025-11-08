@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Mantenedor Ingredientes</title>
+</head>
+<body>
+
+<h1>Mantenedor de Ingredientes</h1>
+
+<div>
+    <h2 th:text="${ingredient.id == null ? 'Crear Ingrediente' : 'Editar Ingrediente'}"></h2>
+
+    <form th:action="@{/ingredients/save}" method="post" th:object="${ingredient}">
+        <input type="hidden" th:field="*{id}" />
+
+        <label>Nombre:</label>
+        <input type="text" th:field="*{name}" required />
+        <br/>
+
+        <label>Tipo:</label>
+        <select th:field="*{ingredientType}">
+            <option th:each="type : ${T(com.kume.kume.infraestructure.models.IngredientType).values()}"
+                    th:value="${type}" th:text="${type}">
+            </option>
+        </select>
+        <br/>
+
+        <button type="submit" th:text="${ingredient.id == null ? 'Crear' : 'Actualizar'}"></button>
+        <a href="/ingredients">Cancelar</a>
+    </form>
+</div>
+
+<hr/>
+
+<h2>Lista de Ingredientes</h2>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Tipo</th>
+        <th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="ing : ${result.data}">
+        <td th:text="${ing.id}"></td>
+        <td th:text="${ing.name}"></td>
+        <td th:text="${ing.ingredientType}"></td>
+        <td>
+            <a th:href="@{'/ingredients?edit=' + ${ing.id}}">Editar</a> |
+            <a th:href="@{'/ingredients/delete/' + ${ing.id}}"
+               onclick="return confirm('¿Eliminar ingrediente?');">Eliminar</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

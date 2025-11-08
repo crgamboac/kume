@@ -53,13 +53,13 @@ public class RecipeService {
     }
 
     @Transactional(readOnly = true)
-    public Result<RecipeResponse> getRecipeByName(String name) {
-        Optional<Recipe> recipe = recipeRepository.findByName(name);
+    public Result<List<RecipeResponse>> getRecipeByName(String name) {
+        List<RecipeResponse> recipes = recipeRepository.findByName(name)
+            .stream()
+            .map(RecipeMapper::toResponse)
+            .collect(Collectors.toList());
 
-        if (!recipe.isPresent())
-            return Result.failure("Receta no encontrada");
-
-        return Result.success("Receta encontrada exitosamente", RecipeMapper.toResponse(recipe.get()));
+        return Result.success("Receta encontrada exitosamente", recipes);
     }
 
     @Transactional(readOnly = true)

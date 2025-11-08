@@ -1,38 +1,36 @@
 <!DOCTYPE html>
-<html
-	xmlns:th="http://www.thymeleaf.org"
-	xmlns:sec="https://www.thymeleaf.org/extras/spring-security"
-	lang="es"
-	th:replace="~{shared/layout :: layout(~{::title}, ~{::section})}"
->
-	<head>
-		<title>Recetas Detalladas (Privado)</title>
-	</head>
-	<body>
-		<section>
-			<header>
-				<th:block
-					th:replace="shared/navbar-layout :: navbar-layout('Recetas Kume',${navbarItems})"
-				></th:block>
-				<h1 sec:authentication="name"></h1>
-			</header>
-			<main>
-				<div class="row">
-					<div class="col-md-3"></div>
-					<div class="col-md-6">
-						<h2>Acceso a Detalles de Recetas (Ruta Privada)</h2>
-						<p>
-							Esta página solo es visible después de iniciar sesión con éxito.
-						</p>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Búsqueda de Recetas</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <h1>Catálogo de Recetas</h1>
 
-                        
-					</div>
-					<div class="col-md-3"></div>
-				</div>
-				<div
-					th:replace="~{shared/toast :: toast(${toastMessage}, ${toastType})}"
-				></div>
-			</main>
-		</section>
-	</body>
+    <form th:action="@{/recipes/list}" method="get" class="search-form">
+        <input type="text" name="query" th:value="${query}" placeholder="Buscar por nombre...">
+        <button type="submit">Buscar</button>
+    </form>
+    
+    <p th:if="${successMessage}" th:text="${successMessage}" class="success"></p>
+
+    <div class="recipe-grid">
+        <div th:each="recipe : ${recipes}" class="recipe-card">
+            <h3 th:text="${recipe.name}">Nombre de la Receta</h3>
+            <p>Tiempo de cocción: <span th:text="${recipe.cookingTime}"></span></p>
+            
+            <a th:href="@{/recipes/{id}/details(id=${recipe.id})}" class="btn-detail">Ver Detalles</a>
+            
+            <div sec:authorize="hasRole('ADMIN')">
+                <a th:href="@{/recipes/{id}/update(id=${recipe.id})}" class="btn-edit">Editar</a>
+                <form th:action="@{/recipes/{id}/delete(id=${recipe.id})}" method="post" style="display:inline;">
+                    <button type="submit" onclick="return confirm('¿Seguro que quieres eliminar?')" class="btn-delete">Eliminar</button>
+                </form>
+            </div>
+        </div>
+        <p th:if="${recipes.isEmpty()}">No se encontró Receta.</p>
+    </div>
+    <p><a th:href="@{/home}">Volver al inicio</a></p>
+</body>
 </html>
