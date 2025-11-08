@@ -2,11 +2,11 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Registrar Nueva Maquinaria</title>
+    <title>Registrar Nueva Receta</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-    <h1>Registrar Nueva Maquinaria</h1>
+    <h1>Registrar Nueva Receta</h1>
     
     <form th:action="@{/recetas/crear}" th:object="${recipeRequest}" method="post">
         
@@ -27,7 +27,7 @@
         </select>
         <p th:if="${#fields.hasErrors('difficulty')}" th:errors="*{difficulty}" class="error"></p>
         
-        <button type="submit">Guardar Maquinaria</button>
+        <button type="submit">Guardar Receta</button>
     </form>
     
     <p><a th:href="@{/recetas/listado}">Volver al listado</a></p>
