@@ -8,7 +8,7 @@
 <body>
     <h1>Catálogo de Recetas</h1>
 
-    <form th:action="@{/recetas/listado}" method="get" class="search-form">
+    <form th:action="@{/recipes/list}" method="get" class="search-form">
         <input type="text" name="query" th:value="${query}" placeholder="Buscar por nombre...">
         <button type="submit">Buscar</button>
     </form>
@@ -20,11 +20,11 @@
             <h3 th:text="${recipe.name}">Nombre de la Receta</h3>
             <p>Tiempo de cocción: <span th:text="${recipe.cookingTime}"></span></p>
             
-            <a th:href="@{/recetas/{id}/detalle(id=${recipe.id})}" class="btn-detail">Ver Detalles</a>
+            <a th:href="@{/recipes/{id}/details(id=${recipe.id})}" class="btn-detail">Ver Detalles</a>
             
             <div sec:authorize="hasRole('ADMIN')">
-                <a th:href="@{/recetas/{id}/editar(id=${recipe.id})}" class="btn-edit">Editar</a>
-                <form th:action="@{/recetas/{id}/eliminar(id=${recipe.id})}" method="post" style="display:inline;">
+                <a th:href="@{/recipes/{id}/update(id=${recipe.id})}" class="btn-edit">Editar</a>
+                <form th:action="@{/recipes/{id}/delete(id=${recipe.id})}" method="post" style="display:inline;">
                     <button type="submit" onclick="return confirm('¿Seguro que quieres eliminar?')" class="btn-delete">Eliminar</button>
                 </form>
             </div>
