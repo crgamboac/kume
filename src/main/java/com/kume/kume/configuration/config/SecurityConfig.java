@@ -23,7 +23,7 @@ public class SecurityConfig {
 
                         .loginPage("/auth/login")
                         .permitAll()
-                        .defaultSuccessUrl("/recipes", true)
+                        .defaultSuccessUrl("/recipes/list", true)
                         .failureUrl("/auth/login?error=true"))
 
                 .logout(logout -> logout
