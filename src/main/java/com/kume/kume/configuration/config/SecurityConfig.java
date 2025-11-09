@@ -17,15 +17,18 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
-                .loginPage("/auth/login") 
-                .permitAll() 
-                .defaultSuccessUrl("/recipes/list", true)
-                .failureUrl("/auth/login?error=true"))
+
+                        .loginPage("/auth/login")
+                        .permitAll()
+                        .defaultSuccessUrl("/recipes", true)
+                        .failureUrl("/auth/login?error=true"))
+
                 .logout(logout -> logout
-                    .permitAll()
-                    .logoutSuccessUrl("/auth/login"));
+                        .permitAll()
+                        .logoutSuccessUrl("/auth/login"));
 
         return http.build();
     }

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+	<body>
+		<th:block th:fragment="navbar-layout(title, items)">
+			<nav
+				class="navbar bg-light-subtle text-light-emphasis border-bottom border-body"
+				data-bs-theme="dark"
+			>
+				<div class="container-fluid">
+					<a class="navbar-brand" href="#" th:text="${title}">navbar</a>
+
+					<button
+						class="navbar-toggler"
+						type="button"
+						data-bs-toggle="collapse"
+						data-bs-target="#navbarNavAltMarkup"
+					>
+						<span class="navbar-toggler-icon"></span>
+					</button>
+
+					<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+						<div class="navbar-nav">
+							<a
+								th:each="item : ${items}"
+								class="nav-link"
+								th:href="${item.url}"
+								th:text="${item.label}"
+							></a>
+						</div>
+					</div>
+				</div>
+			</nav>
+		</th:block>
+	</body>
+</html>
