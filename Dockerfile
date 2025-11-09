@@ -1,24 +1,24 @@
 # ----------------------------------------------------------------------------------
 # STAGE 1: BUILD (Compilación)
-# Utiliza una imagen con Maven y JDK 21 para compilar el código.
 # ----------------------------------------------------------------------------------
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copia los archivos de configuración de Maven (pom.xml)
-# Esta etapa usa el cache de Docker si el pom.xml no ha cambiado.
-COPY pom.xml .
+# 1. Copia el pom.xml PRIMERO.
+COPY pom.xml /app/
 
-# Descarga las dependencias (el goal "go-offline" asegura que la descarga sea explícita)
-# El flag -B (batch mode) ayuda a la automatización sin interacción.
-RUN mvn dependency:go-offline -B
+# 2. Ejecuta la descarga de dependencias, FORZANDO la ubicación del pom.xml.
+# Usamos -f /app/pom.xml para ser explícitos sobre dónde está el archivo.
+RUN mvn dependency:go-offline -B -f /app/pom.xml
 
-# Copia el código fuente restante de la aplicación
-COPY . .
+# 3. Copia el resto del código fuente.
+# La instrucción COPY . . debe COPIAR también el pom.xml, así que lo reemplazamos.
+# Para evitar duplicados en el build cache:
+COPY . /app/
 
-# Ejecuta la compilación de la aplicación, creando el JAR ejecutable.
-# clean y package son fases de ciclo de vida de Maven, no goals.
-RUN mvn clean package -DskipTests
+# 4. Ejecuta la compilación de la aplicación.
+# También forzamos el path del pom.xml en la compilación.
+RUN mvn clean package -DskipTests -f /app/pom.xml
 
 # ----------------------------------------------------------------------------------
 # STAGE 2: RUN (Ejecución)
