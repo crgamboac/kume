@@ -19,15 +19,7 @@ ARG JAR_FILE=/app/target/*.jar
 # Copia el JAR compilado desde el Stage de compilación
 COPY --from=build ${JAR_FILE} app.jar
 
-<<<<<<< HEAD:dockerfile
 # Configuración de red y arranque
 EXPOSE 8080
 # Especifica el punto de entrada para ejecutar la aplicación Spring Boot
 ENTRYPOINT ["java", "-jar", "/app.jar"]
-=======
-COPY ${JAR_FILE} app.jar
-
-ENTRYPOINT ["java", "-jar", "/app.jar"]
-
-EXPOSE 8080
->>>>>>> cc34f815cdbec3fedc1e9066f22f57417f4b5018:Dockerfile
