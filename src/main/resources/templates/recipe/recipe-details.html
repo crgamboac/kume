@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  lang="es"
+  th:replace="~{shared/layout :: layout(~{::title}, ~{::section})}"
+>
+    <head>
+        <title th:text="${'Detalles: ' + recipe.name}">Detalles de Receta</title>
+    </head>
+    <body>
+        <section id="content" class="container mt-4">
+            
+            <a th:href="@{/recipes/list}" class="btn btn-sm btn-outline-secondary mb-4">
+                <i class="bi bi-arrow-left"></i> Volver al Catálogo
+            </a>
+
+            <div class="row">
+                
+                                <div class="col-lg-8">
+                    <h1 class="mb-3 text-primary" th:text="${recipe.name}">Nombre de la Receta</h1>
+                    
+                                        <img th:src="@{${recipe.imageUrl}}" alt="Imagen de la Receta" class="img-fluid rounded shadow mb-4" style="max-height: 400px; width: 100%; object-fit: cover;">
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <span class="badge bg-info text-dark" th:text="${'⏱️ Tiempo: ' + recipe.cookingTime + ' min'}">90 min</span>
+                        <span class="badge bg-success" th:text="${'🏅 Dificultad: ' + #strings.capitalize(recipe.difficulty.toString().toLowerCase())}">Intermedia</span>
+                        <span class="badge bg-warning text-dark" th:text="${'🍴 Tipo: ' + recipe.type}">Italiana</span>
+                        <span class="badge bg-secondary" th:text="${'🌎 Origen: ' + recipe.country}">Italia</span>
+                    </div>
+
+                    <h2 class="mt-4 mb-3">Preparación 👨‍🍳</h2>
+                    <ol class="list-group list-group-numbered">
+                        <li th:each="step : ${recipe.steps}" th:text="${step.instruction}" class="list-group-item d-flex justify-content-between align-items-start">
+                            Instrucción del paso 1...
+                        </li>
+                    </ol>
+                    <p th:if="${recipe.steps.isEmpty()}" class="alert alert-info mt-3">No se especificaron pasos de preparación.</p>
+                </div>
+                
+                                <div class="col-lg-4">
+                    <div class="card shadow-sm sticky-top" style="top: 20px;">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0">Ingredientes 🛒</h5>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li th:each="ri : ${recipe.ingredients}" class="list-group-item">
+                                <span class="fw-bold" th:text="${ri.quantity} + ' '">500 g</span> 
+                                <span th:text="${ri.ingredient.name}">de harina</span>
+                            </li>
+                        </ul>
+                        <p th:if="${recipe.ingredients.isEmpty()}" class="card-body alert alert-info m-0">No se especificaron ingredientes.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </body>
+</html>

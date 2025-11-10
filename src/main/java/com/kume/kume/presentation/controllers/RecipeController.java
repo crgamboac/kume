@@ -1,5 +1,6 @@
 package com.kume.kume.presentation.controllers;
 
+import com.kume.kume.application.dto.Result;
 import com.kume.kume.application.dto.recipe.CreateRecipeRequest;
 import com.kume.kume.application.dto.recipe.UpdateRecipeRequest;
 import com.kume.kume.application.dto.recipe.RecipeResponse;
@@ -7,7 +8,10 @@ import com.kume.kume.application.services.RecipeService;
 import com.kume.kume.infraestructure.models.DifficultyLevel; // Asumiendo este enum existe
 import com.kume.kume.presentation.mappers.RecipeMapper;
 
-import jakarta.validation.Valid; // Importante para la validación
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -15,59 +19,51 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-import java.util.Map;
-
-import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-@RequestMapping("/recipes") // Prefijo para todas las rutas del CRUD
+@RequestMapping("/recipes")
+@AllArgsConstructor
 public class RecipeController {
 
+    @Autowired
     private final RecipeService recipeService;
 
-    public RecipeController(RecipeService recipeService) {
-        this.recipeService = recipeService;
-    }
-
-    // --- Rutas Públicas (Listado y Búsqueda) ---
-
     /**
-     * [Pública] Mapea la URL de BÚSQUEDA/LISTADO.
-     * Cumple con el requisito de 'Buscar recetas'.
+     * Mapeo para la búsqueda y listado de recetas.
+     * Usa @RequestParam para capturar los filtros.
      */
-    @GetMapping({ "/search", "/list" })
-    public String listRecipes(@RequestParam(value = "query", required = false) String query, Model model) {
+    @GetMapping("/list")
+    public String listRecipes(
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "type", required = false) String type,
+            @RequestParam(value = "country", required = false) String country,
+            @RequestParam(value = "difficulty", required = false) DifficultyLevel difficulty,
+            Model model) {
 
-        List<RecipeResponse> recipes;
-
-        if (query != null && !query.isEmpty()) {
-            recipes = recipeService.getRecipeByName(query).getData();
-        } else {
-            recipes = recipeService.getAllRecipes().getData();
-        }
+        List<RecipeResponse> recipes = recipeService.searchRecipes(query, type, country, difficulty).getData();
 
         model.addAttribute("recipes", recipes);
+        
+        // Pasar los filtros actuales para mantenerlos en el formulario
         model.addAttribute("query", query);
+        model.addAttribute("type", type);
+        model.addAttribute("country", country);
+        model.addAttribute("difficulty", difficulty);
+        model.addAttribute("allDifficulties", DifficultyLevel.values()); // Para el <select> en Thymeleaf
+
         return "recipe/recipe-list";
     }
 
-    /**
-     * [Privada] Mapea la URL para VER DETALLES. Requiere autenticación.
-     * Cumple con el requisito de 'Visualizar las recetas para tener acceso a los
-     * detalles'.
-     */
     @GetMapping("/{id}/details")
     public String viewRecipeDetails(@PathVariable("id") Long id, Model model) {
-        RecipeResponse recipe = recipeService.getRecipeById(id)
-                .getData(); // Asume que .getData() maneja el Optional y lanza una excepción si falla
-
-        if (recipe == null) {
-            // Manejo de error básico (no encontrado)
-            return "redirect:/recetas/listado";
+        Result<RecipeResponse> recipeOpt = recipeService.getRecipeById(id); // Obtiene el DTO
+        
+        if (!recipeOpt.isSuccess()) {
+            return "redirect:/recipes/list?error=notfound";
         }
 
-        model.addAttribute("recipe", recipe);
-        return "recipe/recipe-detail"; // Vista: Detalle de receta (Privada)
+        model.addAttribute("recipe", recipeOpt.getData()); 
+        return "recipe/recipe-details";
     }
 
     // --- Rutas del CRUD (ADMIN/Privadas) ---
@@ -142,16 +138,5 @@ public class RecipeController {
         recipeService.deleteRecipe(id);
         redirectAttributes.addFlashAttribute("successMessage", "Receta eliminada exitosamente.");
         return "redirect:/recipes/list";
-    }
-
-    @GetMapping("/recipes")
-    public String privateRecipesList(Model model) {
-
-        model.addAttribute("navbarItems", List.of(
-                Map.of("label", "Inicio", "url", "/home"),
-                Map.of("label", "Cerrar Sesión", "url", "/auth/logout")));
-        model.addAttribute("toastMessage", "Bienvenido, has iniciado sesión correctamente.");
-        model.addAttribute("toastType", "success");
-        return "recipe/recipe-list";
     }
 }

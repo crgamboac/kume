@@ -2,33 +2,78 @@
 <html
   xmlns:th="http://www.thymeleaf.org"
   lang="es"
-  th:replace="~{shared/layout :: layout(~{::title}, ~{::#prueba})}"
+  th:replace="~{shared/layout :: layout(~{::title}, ~{::section})}"
 >
-  <head>
-    <title>Catálogo de Recetas</title>
-  </head>
-   
-  <body>
-    <section id="prueba">
-      <h1>Catálogo de Recetas</h1>
-      <form
-        th:action="@{/recipes/list}"
-        method="get"
-        class="search-form"
-      ></form>
+    <head>
+        <title>Catálogo de Recetas</title>
+    </head>
+    <body>
+        <div id="content" class="container mt-4">
+            <section class="p-5"> 
+                <h1>Catálogo de Recetas</h1>
+                <hr class="mb-4">
 
-      <p
-        th:if="${successMessage}"
-        th:text="${successMessage}"
-        class="success"
-      ></p>
+                 <form th:action="@{/recipes/list}" method="get" class="row g-3 mb-5 align-items-end">
+                    
+                    <div class="col-md-4">
+                        <label for="query" class="form-label">Nombre/Ingrediente</label>
+                        <input type="text"
+                                name="query"
+                                id="query"
+                                th:value="${query}"
+                                placeholder="Buscar por nombre o ingrediente"
+                                class="form-control"/>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="difficulty" class="form-label">Dificultad</label>
+                        <select name="difficulty" id="difficulty" class="form-select">
+                            <option value="">Cualquiera</option>
+                            <option 
+                                th:each="diff : ${allDifficulties}" 
+                                th:value="${diff}" 
+                                th:text="${#strings.capitalize(diff.toString().toLowerCase())}"
+                                th:selected="${#strings.equals(#objects.nullSafe(difficulty, ''), diff.toString())}"
+                            >Fácil</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="type" class="form-label">Tipo de Cocina</label>
+                        <select name="type" id="type" class="form-select">
+                            <option value="">Cualquiera</option>
+                            <option value="Mexicana" th:selected="${type == 'Mexicana'}">Mexicana</option>
+                            <option value="Italiana" th:selected="${type == 'Italiana'}">Italiana</option>
+                            <option value="Tailandesa" th:selected="${type == 'Tailandesa'}">Tailandesa</option>
+                            <option value="Española" th:selected="${type == 'Española'}">Española</option>
+                            <option value="Postre" th:selected="${type == 'Postre'}">Postre</option>
+                        </select>
+                    </div>
 
-      <div class="recipe-grid">
-        <div th:each="recipe : ${recipes}" class="recipe-card"></div>
-        <p th:if="${recipes.isEmpty()}">No se encontró Receta.</p>
-      </div>
-      <p><a th:href="@{/home}">Volver al inicio</a></p>
-    </section>
-     
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+                        <a th:href="@{/recipes/list}" class="btn btn-outline-secondary">Limpiar</a>
+                    </div>
+                </form>
+                
+                <div class="row mb-3">
+                    <div class="col">
+                        <p class="text-muted">Mostrando <strong th:text="${recipes.size()}">0</strong> recetas encontradas.</p>
+                    </div>
+                </div>
+
+                <div class="recipe-grid">
+                    <div th:replace="~{recipe/recipe-cards :: card-grid(${recipes})}">
+                        <div class="row row-cols-1 row-cols-md-2 g-4">...</div>
+                    </div>
+                </div>
+                
+                <div th:if="${recipes.isEmpty()}" class="alert alert-warning text-center mt-5" role="alert">
+                    <h4 class="alert-heading">¡Vaya! 😔</h4>
+                    <p>No se encontraron recetas que coincidan con los filtros aplicados. Intenta con una búsqueda diferente.</p>
+                </div>
+                
+            </section>
+        </div>
   </body>
 </html>

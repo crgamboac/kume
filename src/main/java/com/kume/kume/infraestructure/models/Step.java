@@ -31,7 +31,7 @@ public class Step {
     @Column(name = "step_number")
     private Long stepNumber;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "recipe_id", nullable = false)
     private Recipe recipe;
 }

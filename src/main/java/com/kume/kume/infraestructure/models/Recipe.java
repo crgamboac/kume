@@ -17,6 +17,7 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -25,6 +26,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(exclude = {"ingredients", "steps", "user"})
 public class Recipe {
     @Id
     @Column(name = "id")
@@ -40,6 +42,12 @@ public class Recipe {
     @Column(name = "difficulty")
     @Enumerated(EnumType.STRING)
     private DifficultyLevel difficulty;
+
+    @Column(name = "type")
+    private String type;
+
+    @Column(name = "country")
+    private String country;
 
     @Column(name = "image_url")
     private String imageUrl;

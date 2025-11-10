@@ -23,6 +23,10 @@ public class CreateRecipeRequest {
     private Long cookingTime;
     @NotBlank(message = "La dificultad de la receta es obligatoria")
     private DifficultyLevel difficulty;
+    @NotBlank(message = "El tipo de cocina es obligatorio")
+    private String type;
+    @NotBlank(message = "El país de origen es obligatorio")
+    private String country;
     @NotBlank(message = "La URL de la imagen es obligatoria")
     private String imageUrl;
     @NotNull(message = "La lista de ingredientes no debe ser nula")

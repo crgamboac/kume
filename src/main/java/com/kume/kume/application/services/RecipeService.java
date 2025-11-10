@@ -12,6 +12,7 @@ import com.kume.kume.application.dto.Result;
 import com.kume.kume.application.dto.recipe.CreateRecipeRequest;
 import com.kume.kume.application.dto.recipe.RecipeResponse;
 import com.kume.kume.application.dto.recipe.UpdateRecipeRequest;
+import com.kume.kume.infraestructure.models.DifficultyLevel;
 import com.kume.kume.infraestructure.models.Recipe;
 import com.kume.kume.infraestructure.repositories.RecipeRepository;
 import com.kume.kume.presentation.mappers.RecipeMapper;
@@ -89,4 +90,34 @@ public class RecipeService {
     public void deleteRecipe(Long id) {
         recipeRepository.deleteById(id);
     } 
+
+    /**
+     * Simula la búsqueda de recetas aplicando varios filtros.
+     * @param query Texto libre para buscar en nombre o ingredientes.
+     * @param type Tipo de cocina (e.g., "Mexicana", "Italiana").
+     * @param country País de origen.
+     * @param difficulty Nivel de dificultad.
+     * @return Lista de RecipeResponse filtradas.
+     */
+    @Transactional(readOnly = true)
+    public Result<List<RecipeResponse>> searchRecipes(String query, String type, String country, DifficultyLevel difficulty) {
+        
+        final String lowerCaseQuery = (query != null) ? query.toLowerCase() : "";
+
+        List<RecipeResponse> recipes = recipeRepository
+                .findAllWithDetails()
+                .stream()
+                .map(RecipeMapper::toResponse)
+                .filter(recipe -> lowerCaseQuery.isEmpty() || 
+                                   recipe.getName().toLowerCase().contains(lowerCaseQuery) ||
+                                   recipe.getIngredients().stream().anyMatch(
+                                        ri -> ri.getIngredient().getName().toLowerCase().contains(lowerCaseQuery)
+                                    ))
+                .filter(recipe -> type == null || type.isEmpty() || type.equalsIgnoreCase(recipe.getType()))
+                .filter(recipe -> country == null || country.isEmpty() || country.equalsIgnoreCase(recipe.getCountry()))
+                .filter(recipe -> difficulty == null || difficulty == recipe.getDifficulty())
+                .collect(Collectors.toList());
+
+        return Result.success("Recetas encontradas exitosamente", recipes);
+    }
 }

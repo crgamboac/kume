@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  lang="es"
+  th:replace="~{shared/layout :: layout(~{::title}, ~{::section})}"
+>
+         
+  <head>
+           
+    <title>Inicio - Kume Recetas</title>
+       
+  </head>
+         
+  <body>
+           
+    <section class="container mt-4">
+                 
+      <div id="adCarousel" class="carousel slide mb-5" data-bs-ride="carousel">
+                       
+        <div class="carousel-inner rounded shadow-sm">
+                             
+          <div
+            th:each="ad, stat : ${commercialBanners}"
+            th:classappend="${stat.first} ? 'active'"
+            class="carousel-item"
+          >
+                                   
+            <img
+              th:src="@{${ad.imageUrl}}"
+              class="d-block w-100"
+              alt="Banner Comercial"
+              style="max-height: 250px; object-fit: cover"
+            />
+                                   
+            <div
+              class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 p-2 rounded"
+            >
+                                         
+              <h5 th:text="${ad.title}">Anuncio de Empresa</h5>
+                                         
+              <a th:href="@{${ad.linkUrl}}" class="btn btn-sm btn-outline-light"
+                >Ver Oferta</a
+              >
+                                     
+            </div>
+                               
+          </div>
+                         
+        </div>
+                                       
+        <button
+          class="carousel-control-prev"
+          type="button"
+          data-bs-target="#adCarousel"
+          data-bs-slide="prev"
+        >
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Anterior</span>
+        </button>
+        <button
+          class="carousel-control-next"
+          type="button"
+          data-bs-target="#adCarousel"
+          data-bs-slide="next"
+        >
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Siguiente</span>
+        </button>
+                   
+      </div>
+
+      <div class="row">
+        <div class="col-lg-8">
+          <h2 class="mb-3 text-primary">Recetas Más Recientes ⏱️</h2>
+          <div
+            th:replace="~{recipe/recipe-cards :: card-grid(${recentRecipes})}"
+          ></div>
+
+          <hr class="my-5" />
+
+          <h2 class="mb-3 text-success">Recetas Populares 🔥</h2>
+          <div
+            th:replace="~{recipe/recipe-cards :: card-grid(${popularRecipes})}"
+          ></div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card shadow">
+            <div class="card-header bg-dark text-white">Acceso Rápido</div>
+            <div class="card-body">
+              <div sec:authorize="!isAuthenticated()">
+                <h5 class="card-title">¡Únete a Kume!</h5>
+                <p class="card-text">
+                  Accede a tus recetas guardadas, comenta y publica las tuyas.
+                </p>
+                <a th:href="@{/login}" class="btn btn-primary w-100 mb-2"
+                  >Iniciar Sesión</a
+                >
+                <!-- <a
+                  th:href="@{/register}"
+                  class="btn btn-outline-secondary w-100"
+                  >Crear Cuenta</a
+                > -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+             
+    </section>
+       
+  </body>
+</html>
