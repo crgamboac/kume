@@ -14,6 +14,7 @@ import com.kume.kume.infraestructure.models.User;
 import com.kume.kume.infraestructure.repositories.UserRepository;
 import com.kume.kume.presentation.mappers.RecipeMapper;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
@@ -67,7 +68,7 @@ public class RecipeController {
     }
 
     @GetMapping("/{id}/details")
-    public String viewRecipeDetails(@PathVariable("id") Long id, Model model) {
+    public String viewRecipeDetails(@PathVariable("id") Long id, Model model, HttpServletRequest request) {
         //Obtener el DTO de la receta
         Result<RecipeResponse> recipeOpt = recipeService.getRecipeById(id);
         if (!recipeOpt.isSuccess()) {
@@ -76,10 +77,15 @@ public class RecipeController {
         RecipeResponse recipe = recipeOpt.getData();
         // Obtener comentarios raíz para esta receta
         List<CommentResponse> comments = commentService.getRootComments(recipe.getId());
+        
 
+        String absoluteUrl = request.getRequestURL().toString();
+        
         //Pasar datos a la vista
         model.addAttribute("recipe", recipe);
         model.addAttribute("comments", comments);
+        model.addAttribute("shareUrl", absoluteUrl);
+
 
         return "recipe/recipe-details";
     }
