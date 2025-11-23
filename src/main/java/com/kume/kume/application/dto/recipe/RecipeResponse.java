@@ -1,5 +1,6 @@
 package com.kume.kume.application.dto.recipe;
 
+import java.util.Map;
 import java.util.Set;
 
 import com.kume.kume.infraestructure.models.DifficultyLevel;
@@ -25,5 +26,9 @@ public class RecipeResponse {
     private String country;
     private Set<RecipeIngredient> ingredients;
     private Set<Step> steps;
+
+    private double averageRating;
+    private Map<Integer, Long> ratingCounts;
+    private Integer userRating;
 }
 
