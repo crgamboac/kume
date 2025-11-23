@@ -1,17 +1,25 @@
 package com.kume.kume.presentation.controllers;
 
 import com.kume.kume.application.dto.Result;
+import com.kume.kume.application.dto.comment.CommentResponse;
 import com.kume.kume.application.dto.recipe.CreateRecipeRequest;
 import com.kume.kume.application.dto.recipe.UpdateRecipeRequest;
 import com.kume.kume.application.dto.recipe.RecipeResponse;
+import com.kume.kume.application.services.CommentService;
+import com.kume.kume.application.services.RatingService;
 import com.kume.kume.application.services.RecipeService;
+import com.kume.kume.infraestructure.models.Comment;
 import com.kume.kume.infraestructure.models.DifficultyLevel; // Asumiendo este enum existe
+import com.kume.kume.infraestructure.models.User;
+import com.kume.kume.infraestructure.repositories.UserRepository;
 import com.kume.kume.presentation.mappers.RecipeMapper;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -27,6 +35,10 @@ public class RecipeController {
 
     @Autowired
     private final RecipeService recipeService;
+    private final CommentService commentService;
+    private final RatingService ratingService;
+    private final UserRepository userRepository;
+    
 
     /**
      * Mapeo para la búsqueda y listado de recetas.
@@ -56,15 +68,22 @@ public class RecipeController {
 
     @GetMapping("/{id}/details")
     public String viewRecipeDetails(@PathVariable("id") Long id, Model model) {
-        Result<RecipeResponse> recipeOpt = recipeService.getRecipeById(id); // Obtiene el DTO
-        
+        //Obtener el DTO de la receta
+        Result<RecipeResponse> recipeOpt = recipeService.getRecipeById(id);
         if (!recipeOpt.isSuccess()) {
             return "redirect:/recipes/list?error=notfound";
         }
+        RecipeResponse recipe = recipeOpt.getData();
+        // Obtener comentarios raíz para esta receta
+        List<CommentResponse> comments = commentService.getRootComments(recipe.getId());
 
-        model.addAttribute("recipe", recipeOpt.getData()); 
+        //Pasar datos a la vista
+        model.addAttribute("recipe", recipe);
+        model.addAttribute("comments", comments);
+
         return "recipe/recipe-details";
     }
+
 
     // --- Rutas del CRUD (ADMIN/Privadas) ---
 
@@ -139,4 +158,21 @@ public class RecipeController {
         redirectAttributes.addFlashAttribute("successMessage", "Receta eliminada exitosamente.");
         return "redirect:/recipes/list";
     }
+
+
+    // rating recipe
+    @PostMapping("/{id}/rate")
+    public String rateRecipe(
+            @PathVariable Long id,
+            @RequestParam int stars) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found for email: " + username));
+
+        ratingService.rateRecipe(user.getId(), id, stars);
+        return "redirect:/recipes/" + id + "/details";
+    }
+
 }
