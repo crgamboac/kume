@@ -9,6 +9,8 @@ import com.kume.kume.application.dto.recipe.RecipeResponse;
 import com.kume.kume.application.dto.recipe.UpdateRecipeRequest;
 import com.kume.kume.infraestructure.models.Recipe;
 import com.kume.kume.infraestructure.models.RecipeIngredient;
+import com.kume.kume.infraestructure.models.Step;
+import com.kume.kume.infraestructure.models.User;
 
 public class RecipeMapper {
     public static RecipeResponse toResponse(Recipe recipe) {
@@ -29,8 +31,8 @@ public class RecipeMapper {
 
         if (recipe.getIngredients() != null) {
             Set<RecipeIngredient> ingredientDTOs = recipe.getIngredients().stream()
-                            .collect(Collectors.toSet());
-            recipeResponse.setIngredients(ingredientDTOs); 
+                    .collect(Collectors.toSet());
+            recipeResponse.setIngredients(ingredientDTOs);
         } else {
             recipe.setIngredients(Collections.emptySet()); // Asegurar que NUNCA sea NULL
         }
@@ -39,26 +41,44 @@ public class RecipeMapper {
     }
 
     public static Recipe toEntity(CreateRecipeRequest request) {
-        if (request == null) {
+        if (request == null)
             return null;
-        }
-        
-        return Recipe.builder()
+
+        Recipe recipe = Recipe.builder()
                 .name(request.getName())
                 .cookingTime(request.getCookingTime())
                 .difficulty(request.getDifficulty())
                 .imageUrl(request.getImageUrl())
                 .country(request.getCountry())
                 .type(request.getType())
-                .ingredients(request.getIngredients()
-                    .stream().map(RecipeIngredientMapper::toEntity)
-                    .collect(Collectors.toSet()))
-                .steps(request.getSteps()
-                    .stream().map(StepMapper::toEntity)
-                    .collect(Collectors.toSet()))
                 .build();
+
+        User user = User.builder().id(request.getUserId()).build();
+
+        recipe.setUser(user);
+        
+        Set<RecipeIngredient> ingredients = request.getIngredients().stream()
+                .map(r -> {
+                    RecipeIngredient ri = RecipeIngredientMapper.toEntity(r);
+                    ri.setRecipe(recipe); // ← VÍNCULO OBLIGATORIO
+                    return ri;
+                })
+                .collect(Collectors.toSet());
+
+        Set<Step> steps = request.getSteps().stream()
+                .map(s -> {
+                    Step step = StepMapper.toEntity(s);
+                    step.setRecipe(recipe); // ← también requerido
+                    return step;
+                })
+                .collect(Collectors.toSet());
+
+        recipe.setIngredients(ingredients);
+        recipe.setSteps(steps);
+
+        return recipe;
     }
-    
+
     public static Recipe updateEntity(Recipe existingRecipe, UpdateRecipeRequest request) {
         if (request == null) {
             return null;
@@ -70,7 +90,7 @@ public class RecipeMapper {
         existingRecipe.setImageUrl(request.getImageUrl());
         existingRecipe.setIngredients(request.getIngredients());
         return existingRecipe;
-    } 
+    }
 
     public static UpdateRecipeRequest toUpdateRequest(RecipeResponse recipe) {
         if (recipe == null) {
@@ -80,4 +100,4 @@ public class RecipeMapper {
                 .name(recipe.getName())
                 .build();
     }
-}     
+}

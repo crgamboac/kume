@@ -11,7 +11,6 @@ import com.kume.kume.application.dto.Result;
 import com.kume.kume.infraestructure.models.Ingredient;
 import com.kume.kume.infraestructure.repositories.IngredientRepository;
 
-import lombok.RequiredArgsConstructor;
 
 @Service
 public class IngredientService {
