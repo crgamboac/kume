@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<th:block th:fragment="commentList(comments, recipeId)">
+  <div th:each="comment : ${comments}">
+    <div class="card my-3">
+      <div class="card-body">
+
+        <!-- Autor + Fecha -->
+        <h6 class="text-muted mb-1">
+          <strong th:text="${comment.authorName}">Autor</strong>
+          ·
+          <span th:text="${#temporals.format(comment.createdAt, 'dd/MM/yyyy HH:mm')}">
+            20/11/2025
+          </span>
+        </h6>
+
+        <!-- Contenido -->
+        <p class="mb-2" th:text="${comment.content}">Contenido del comentario</p>
+
+        <!-- Botón "Responder" -->
+        <button class="btn btn-sm btn-link" 
+                type="button" 
+                data-bs-toggle="collapse"
+                th:attr="data-bs-target='#replyForm__'+${comment.id}">
+          Responder
+        </button>
+
+        <!-- Formulario de respuesta (colapsable) -->
+        <div class="collapse mt-2" th:id="'replyForm__' + ${comment.id}">
+          <form th:action="@{/recipes/{id}/comments(id=${recipeId})}" method="post">
+            <input type="hidden" name="userId" value="1" />
+            <input type="hidden" name="parentId" th:value="${comment.id}" />
+
+            <textarea name="content" class="form-control mb-2" rows="2"
+                      placeholder="Escribe una respuesta..."></textarea>
+            <button class="btn btn-sm btn-primary" type="submit">Responder</button>
+          </form>
+        </div>
+
+        <!-- Respuestas -->
+        <div class="ms-4 mt-3" th:if="${comment.replies != null}">
+          <th:block th:replace="recipe/recipe-comments :: commentList(${comment.replies}, ${recipeId})"></th:block>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</th:block>
+
+
+</body>
+</html>

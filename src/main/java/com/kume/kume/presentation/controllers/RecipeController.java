@@ -2,22 +2,31 @@ package com.kume.kume.presentation.controllers;
 
 import com.kume.kume.application.dto.IngredientDTO;
 import com.kume.kume.application.dto.Result;
+import com.kume.kume.application.dto.comment.CommentResponse;
 import com.kume.kume.application.dto.recipe.CreateRecipeRequest;
 import com.kume.kume.application.dto.recipe.UpdateRecipeRequest;
 import com.kume.kume.application.dto.recipe.RecipeResponse;
 import com.kume.kume.application.services.IngredientService;
 import com.kume.kume.application.services.RecipeMediaService;
+import com.kume.kume.application.services.CommentService;
+import com.kume.kume.application.services.RatingService;
 import com.kume.kume.application.services.RecipeService;
+import com.kume.kume.infraestructure.models.Comment;
 import com.kume.kume.infraestructure.models.DifficultyLevel; // Asumiendo este enum existe
 import com.kume.kume.infraestructure.models.RecipeMedia;
 import com.kume.kume.infraestructure.models.User;
+import com.kume.kume.infraestructure.models.User;
+import com.kume.kume.infraestructure.repositories.UserRepository;
 import com.kume.kume.presentation.mappers.RecipeMapper;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -34,6 +43,10 @@ public class RecipeController {
 
     @Autowired
     private final RecipeService recipeService;
+    private final CommentService commentService;
+    private final RatingService ratingService;
+    private final UserRepository userRepository;
+    
 
     @Autowired
     private final IngredientService ingredientService;
@@ -68,13 +81,24 @@ public class RecipeController {
     }
 
     @GetMapping("/{id}/details")
-    public String viewRecipeDetails(@PathVariable("id") Long id, Model model) {
-
+    public String viewRecipeDetails(@PathVariable("id") Long id, Model model, HttpServletRequest request) {
+        //Obtener el DTO de la receta
         Result<RecipeResponse> recipeOpt = recipeService.getRecipeById(id);
-
         if (!recipeOpt.isSuccess()) {
             return "redirect:/recipes/list?error=notfound";
         }
+        RecipeResponse recipe = recipeOpt.getData();
+        // Obtener comentarios raíz para esta receta
+        List<CommentResponse> comments = commentService.getRootComments(recipe.getId());
+        
+
+        String absoluteUrl = request.getRequestURL().toString();
+        
+        //Pasar datos a la vista
+        model.addAttribute("recipe", recipe);
+        model.addAttribute("comments", comments);
+        model.addAttribute("shareUrl", absoluteUrl);
+
 
         RecipeResponse recipe = recipeOpt.getData();
         model.addAttribute("recipe", recipe);
@@ -89,6 +113,7 @@ public class RecipeController {
 
         return "recipe/recipe-details";
     }
+
 
     // --- Rutas del CRUD (ADMIN/Privadas) ---
 
@@ -170,4 +195,21 @@ public class RecipeController {
         redirectAttributes.addFlashAttribute("successMessage", "Receta eliminada exitosamente.");
         return "redirect:/recipes/list";
     }
+
+
+    // rating recipe
+    @PostMapping("/{id}/rate")
+    public String rateRecipe(
+            @PathVariable Long id,
+            @RequestParam int stars) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found for email: " + username));
+
+        ratingService.rateRecipe(user.getId(), id, stars);
+        return "redirect:/recipes/" + id + "/details";
+    }
+
 }

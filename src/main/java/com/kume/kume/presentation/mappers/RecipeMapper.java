@@ -27,6 +27,11 @@ public class RecipeMapper {
                 .country(recipe.getCountry())
                 .type(recipe.getType())
                 .steps(recipe.getSteps())
+                .ingredients(recipe.getIngredients())
+                // estos se llenan luego en RecipeService
+                .averageRating(0)
+                .ratingCounts(null)
+                .userRating(null)
                 .build();
 
         if (recipe.getIngredients() != null) {

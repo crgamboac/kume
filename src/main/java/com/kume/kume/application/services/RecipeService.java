@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,7 @@ import com.kume.kume.application.dto.recipe.CreateRecipeRequest;
 import com.kume.kume.application.dto.recipe.RecipeResponse;
 import com.kume.kume.application.dto.recipe.UpdateRecipeRequest;
 import com.kume.kume.infraestructure.models.DifficultyLevel;
+import com.kume.kume.infraestructure.models.Rating;
 import com.kume.kume.infraestructure.models.Recipe;
 import com.kume.kume.infraestructure.models.RecipeMediaType;
 import com.kume.kume.infraestructure.repositories.RecipeRepository;
@@ -31,7 +33,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class RecipeService {
-
+    private final RatingService ratingService;
+    // private final RecipeMapper recipeMapper;
     @Autowired
     private final RecipeRepository recipeRepository;
 
@@ -102,13 +105,34 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
 
     @Transactional(readOnly = true)
     public Result<RecipeResponse> getRecipeById(Long id) {
-        Optional<Recipe> recipe = recipeRepository.findById(id);
 
-        if (!recipe.isPresent())
-            return Result.failure("Receta no encontrada");
+        Optional<Recipe> recipeOpt = recipeRepository.findById(id);
 
-        return Result.success("Receta encontrada exitosamente", RecipeMapper.toResponse(recipe.get()));
+        if (recipeOpt.isEmpty()) {
+            return Result.error("Recipe not found");
+        }
+
+        Recipe recipe = recipeOpt.get();
+
+        // RecipeResponse dto = recipeMapper.toResponse(recipe);
+        RecipeResponse dto = RecipeMapper.toResponse(recipe);
+
+        // ⭐ Obtener promedio
+        double avg = ratingService.getAverageRating(recipe.getId());
+        dto.setAverageRating(avg);
+
+        // ⭐ Obtener conteos por estrella
+        Map<Integer, Long> counts = ratingService.getRatingCounts(recipe.getId());
+        dto.setRatingCounts(counts);
+
+        // ⭐ Valoración del usuario activo (si no tienes login, pon un userId fijo temporal)
+        Long loggedUserId = 1L; // temporal, igual que en los comentarios
+        Optional<Rating> userRatingOpt = ratingService.getUserRating(loggedUserId, recipe.getId());
+        dto.setUserRating(userRatingOpt.map(Rating::getStars).orElse(null));
+
+        return Result.success("OK", dto);
     }
+
 
     @Transactional(readOnly = true)
     public Result<List<RecipeResponse>> getRecipeByName(String name) {
