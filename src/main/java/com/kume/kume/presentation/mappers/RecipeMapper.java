@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
 import com.kume.kume.application.dto.recipe.CreateRecipeRequest;
 import com.kume.kume.application.dto.recipe.RecipeResponse;
 import com.kume.kume.application.dto.recipe.UpdateRecipeRequest;
@@ -11,9 +13,9 @@ import com.kume.kume.infraestructure.models.Recipe;
 import com.kume.kume.infraestructure.models.RecipeIngredient;
 import com.kume.kume.infraestructure.models.Step;
 import com.kume.kume.infraestructure.models.User;
-
+@Component
 public class RecipeMapper {
-    public static RecipeResponse toResponse(Recipe recipe) {
+    public  RecipeResponse toResponse(Recipe recipe) {
         if (recipe == null) {
             return null;
         }
@@ -45,7 +47,7 @@ public class RecipeMapper {
         return recipeResponse;
     }
 
-    public static Recipe toEntity(CreateRecipeRequest request) {
+    public  Recipe toEntity(CreateRecipeRequest request) {
         if (request == null)
             return null;
 

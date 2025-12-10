@@ -41,11 +41,14 @@ public class RecipeService {
     @Autowired
     private final RecipeMediaService recipeMediaService;
 
+    @Autowired
+    private final RecipeMapper recipeMapper;
+
     @Transactional
 public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws IOException {
 
     // 1. Mapear receta sin imágenes aún
-    Recipe recipe = RecipeMapper.toEntity(request);
+    Recipe recipe = recipeMapper.toEntity(request);
 
     // 2. Guardar receta primero (para obtener ID)
     Recipe savedRecipe = recipeRepository.save(recipe);
@@ -89,7 +92,7 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
 
     return Result.success(
             "Receta creada exitosamente",
-            RecipeMapper.toResponse(updated)
+            recipeMapper.toResponse(updated)
     );
 }
 
@@ -97,7 +100,7 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
     @Transactional(readOnly = true)
     public Result<List<RecipeResponse>> getAllRecipes() {
         List<RecipeResponse> recipes = recipeRepository.findAll().stream()
-                .map(RecipeMapper::toResponse)
+                .map(recipeMapper::toResponse)
                 .collect(Collectors.toList());
 
         return Result.success("Recetas encontradas exitosamente", recipes);
@@ -115,7 +118,7 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
         Recipe recipe = recipeOpt.get();
 
         // RecipeResponse dto = recipeMapper.toResponse(recipe);
-        RecipeResponse dto = RecipeMapper.toResponse(recipe);
+        RecipeResponse dto = recipeMapper.toResponse(recipe);
 
         // ⭐ Obtener promedio
         double avg = ratingService.getAverageRating(recipe.getId());
@@ -138,7 +141,7 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
     public Result<List<RecipeResponse>> getRecipeByName(String name) {
         List<RecipeResponse> recipes = recipeRepository.findByName(name)
                 .stream()
-                .map(RecipeMapper::toResponse)
+                .map(recipeMapper::toResponse)
                 .collect(Collectors.toList());
 
         return Result.success("Receta encontrada exitosamente", recipes);
@@ -148,7 +151,7 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
     public Result<List<RecipeResponse>> getRecipesByDifficulty(String difficulty) {
         List<RecipeResponse> recipes = recipeRepository.findByDifficulty(difficulty.toUpperCase())
                 .stream()
-                .map(RecipeMapper::toResponse)
+                .map(recipeMapper::toResponse)
                 .collect(Collectors.toList());
 
         return Result.success("Recetas encontradas exitosamente", recipes);
@@ -161,10 +164,10 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
         if (!existingRecipe.isPresent())
             Result.failure("Receta no encontrada");
 
-        Recipe updatedRecipe = RecipeMapper.updateEntity(existingRecipe.get(), request);
+        Recipe updatedRecipe = recipeMapper.updateEntity(existingRecipe.get(), request);
         Recipe savedRecipe = recipeRepository.save(updatedRecipe);
 
-        return Result.success("Receta actualizada exitosamente", RecipeMapper.toResponse(savedRecipe));
+        return Result.success("Receta actualizada exitosamente", recipeMapper.toResponse(savedRecipe));
     }
 
     @Transactional
@@ -190,7 +193,7 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
         List<RecipeResponse> recipes = recipeRepository
                 .findAllWithDetails()
                 .stream()
-                .map(RecipeMapper::toResponse)
+                .map(recipeMapper::toResponse)
                 .filter(recipe -> lowerCaseQuery.isEmpty() ||
                         recipe.getName().toLowerCase().contains(lowerCaseQuery) ||
                         recipe.getIngredients().stream().anyMatch(
