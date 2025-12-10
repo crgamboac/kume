@@ -22,12 +22,14 @@ public class CommentService {
         private CommentRepository commentRepository;
         private CommentLikeRepository commentLikeRepository;
         private final CommentMapper commentMapper;
+
         public CommentService(RecipeRepository recipeRepository, UserRepository userRepository,
-                CommentRepository commentRepository, CommentMapper commentMapper) {
+                CommentRepository commentRepository, CommentMapper commentMapper, CommentLikeRepository commentLikeRepository) {
             this.recipeRepository = recipeRepository;
             this.userRepository = userRepository;
             this.commentRepository = commentRepository;
             this.commentMapper = commentMapper;
+            this.commentLikeRepository = commentLikeRepository;
         }
 
         public Comment createComment(Long recipeId, Long userId, String content, Long parentId) {
