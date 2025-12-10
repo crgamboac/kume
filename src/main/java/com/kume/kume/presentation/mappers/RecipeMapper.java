@@ -86,7 +86,7 @@ public class RecipeMapper {
         return recipe;
     }
 
-    public static Recipe updateEntity(Recipe existingRecipe, UpdateRecipeRequest request) {
+    public  Recipe updateEntity(Recipe existingRecipe, UpdateRecipeRequest request) {
         if (request == null) {
             return null;
         }
@@ -99,7 +99,7 @@ public class RecipeMapper {
         return existingRecipe;
     }
 
-    public static UpdateRecipeRequest toUpdateRequest(RecipeResponse recipe) {
+    public  UpdateRecipeRequest toUpdateRequest(RecipeResponse recipe) {
         if (recipe == null) {
             return null;
         }
