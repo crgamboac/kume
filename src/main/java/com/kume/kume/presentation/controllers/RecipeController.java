@@ -1,19 +1,35 @@
 package com.kume.kume.presentation.controllers;
 
+import java.io.IOException;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping; // Asumiendo este enum existe
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import com.kume.kume.application.dto.IngredientDTO;
 import com.kume.kume.application.dto.Result;
 import com.kume.kume.application.dto.comment.CommentResponse;
 import com.kume.kume.application.dto.recipe.CreateRecipeRequest;
-import com.kume.kume.application.dto.recipe.UpdateRecipeRequest;
 import com.kume.kume.application.dto.recipe.RecipeResponse;
-import com.kume.kume.application.services.IngredientService;
-import com.kume.kume.application.services.RecipeMediaService;
+import com.kume.kume.application.dto.recipe.UpdateRecipeRequest;
 import com.kume.kume.application.services.CommentService;
+import com.kume.kume.application.services.IngredientService;
 import com.kume.kume.application.services.RatingService;
+import com.kume.kume.application.services.RecipeMediaService;
 import com.kume.kume.application.services.RecipeService;
-import com.kume.kume.infraestructure.models.Comment;
-import com.kume.kume.infraestructure.models.DifficultyLevel; // Asumiendo este enum existe
-import com.kume.kume.infraestructure.models.RecipeMedia;
+import com.kume.kume.infraestructure.models.DifficultyLevel;
 import com.kume.kume.infraestructure.models.User;
 import com.kume.kume.infraestructure.repositories.UserRepository;
 import com.kume.kume.presentation.mappers.RecipeMapper;
@@ -21,19 +37,6 @@ import com.kume.kume.presentation.mappers.RecipeMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.io.IOException;
-import java.util.List;
 
 @Controller
 @RequestMapping("/recipes")
@@ -53,6 +56,8 @@ public class RecipeController {
     @Autowired
     private final RecipeMediaService recipeMediaService;
 
+    @Autowired
+    private final RecipeMapper recipeMapper;
     /**
      * Mapeo para la búsqueda y listado de recetas.
      * Usa @RequestParam para capturar los filtros.
@@ -155,7 +160,7 @@ public class RecipeController {
         RecipeResponse recipe = recipeService.getRecipeById(id).getData();
 
         // Mapea la respuesta a la solicitud de actualización para poblar el formulario
-        UpdateRecipeRequest request = RecipeMapper.toUpdateRequest(recipe);
+        UpdateRecipeRequest request = recipeMapper.toUpdateRequest(recipe);
 
         model.addAttribute("recipeRequest", request);
         model.addAttribute("difficultyLevels", DifficultyLevel.values());
