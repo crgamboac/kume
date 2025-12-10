@@ -1,12 +1,14 @@
 package com.kume.kume.presentation.mappers;
 
-import com.kume.kume.infraestructure.models.User;
-import com.kume.kume.application.dto.user.CreateUserRequest;
+import org.springframework.stereotype.Component;
 
+import com.kume.kume.application.dto.user.CreateUserRequest;
+import com.kume.kume.infraestructure.models.User;
+@Component
 public class UserMapper {
-    public static CreateUserRequest toDto(User user) {
+    public  CreateUserRequest toDto(User user) {
         if (user == null) {
-            return null;
+            return new CreateUserRequest();
         }
 
         return CreateUserRequest.builder()
@@ -14,9 +16,9 @@ public class UserMapper {
                 .username(user.getUsername())
                 .build();
     }
-    public static User toEntity(CreateUserRequest userDto) {
+    public  User toEntity(CreateUserRequest userDto) {
         if (userDto == null) {
-            return null;
+            return new User();
         }
 
         User user = new User();

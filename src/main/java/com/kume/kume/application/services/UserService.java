@@ -1,5 +1,9 @@
 package com.kume.kume.application.services;
 
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,10 +18,6 @@ import com.kume.kume.presentation.mappers.UserMapper;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -26,6 +26,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository; 
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     @Transactional
     public User register(CreateUserRequest request) throws IllegalStateException {
@@ -43,7 +44,7 @@ public class UserService {
         Set<Role> roles = new HashSet<>();
         roles.add(userRole);
 
-        User user = UserMapper.toEntity(request);
+        User user = userMapper.toEntity(request);
         
         user.setPassword(hashedPassword);
         user.setRoles(roles);
