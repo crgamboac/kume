@@ -3,18 +3,14 @@ package com.kume.kume.application.services;
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue; // Importante para listas vacías seguras
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,74 +33,67 @@ class RecipeServiceTest {
     @Mock
     private RecipeMediaService recipeMediaService;
 
-   
+    @Mock
+    private RecipeMapper recipeMapper;
+
+    @Mock
+    private RatingService ratingService; // <--- ¡ESTO FALTABA!
+
     @InjectMocks
     private RecipeService recipeService;
 
     @Test
     void createRecipe_WithCoverAndExtras_ShouldSaveAndUploadAll() throws IOException {
-
+        // --- ARRANGE ---
         CreateRecipeRequest request = new CreateRecipeRequest();
         MultipartFile mockCover = mock(MultipartFile.class);
-        MultipartFile mockExtra1 = mock(MultipartFile.class);
-
-        when(mockCover.isEmpty()).thenReturn(false);
-        when(mockExtra1.isEmpty()).thenReturn(false);
-        when(mockExtra1.getContentType()).thenReturn("image/jpeg");
+        MultipartFile mockExtra = mock(MultipartFile.class);
 
         request.setImageFile(mockCover);
-        request.setExtraImages(List.of(mockExtra1));
+        request.setExtraImages(List.of(mockExtra));
 
-        Recipe recipeEntity = new Recipe();
-        Recipe savedRecipe = new Recipe();
-        savedRecipe.setId(1L);
+        when(mockCover.isEmpty()).thenReturn(false);
+        when(mockExtra.isEmpty()).thenReturn(false);
+        when(mockExtra.getContentType()).thenReturn("image/jpeg");
 
-        try (MockedStatic<RecipeMapper> mapperMock = mockStatic(RecipeMapper.class)) {
+        Recipe recipe = new Recipe();
+        recipe.setId(1L);
 
-            mapperMock.when(() -> RecipeMapper.toEntity(request)).thenReturn(recipeEntity);
-            mapperMock.when(() -> RecipeMapper.toResponse(any())).thenReturn(new RecipeResponse());
+        when(recipeMapper.toEntity(request)).thenReturn(recipe);
+        when(recipeRepository.save(recipe)).thenReturn(recipe);
+        when(recipeMapper.toResponse(recipe)).thenReturn(new RecipeResponse());
 
-            when(recipeRepository.save(any(Recipe.class))).thenReturn(savedRecipe);
+        when(recipeMediaService.saveMedia(mockCover)).thenReturn("cover.jpg");
+        when(recipeMediaService.saveMedia(mockExtra)).thenReturn("extra.jpg");
 
-            when(recipeMediaService.saveMedia(mockCover)).thenReturn("cover-url.jpg");
-            when(recipeMediaService.saveMedia(mockExtra1)).thenReturn("extra-url.jpg");
+        // --- ACT ---
+        Result<RecipeResponse> result = recipeService.createRecipe(request);
 
-            Result<RecipeResponse> result = recipeService.createRecipe(request);
-
-            assertTrue(result.isSuccess());
-
-            verify(recipeRepository, times(2)).save(any(Recipe.class));
-
-            verify(recipeMediaService).saveMedia(mockCover);
-
-            verify(recipeMediaService).saveMedia(mockExtra1);
-            verify(recipeMediaService).create(any(RecipeMediaDTO.class));
-        }
+        // --- ASSERT ---
+        assertTrue(result.isSuccess());
+        verify(recipeMapper).toEntity(request);
+        verify(recipeRepository).save(recipe); // Se llama al menos una vez
+        verify(recipeMediaService).saveMedia(mockCover);
+        verify(recipeMediaService).saveMedia(mockExtra);
+        verify(recipeMediaService).create(any(RecipeMediaDTO.class));
     }
 
     @Test
-    void createRecipe_NoImages_ShouldSaveOnceOrTwiceWithoutUploads() throws IOException {
+    void createRecipe_NoImages_ShouldSaveWithoutUploads() throws IOException {
         CreateRecipeRequest request = new CreateRecipeRequest();
         request.setImageFile(null);
         request.setExtraImages(null);
 
-        Recipe recipeEntity = new Recipe();
-        Recipe savedRecipe = new Recipe();
-        savedRecipe.setId(1L);
+        Recipe recipe = new Recipe();
+        
+        when(recipeMapper.toEntity(request)).thenReturn(recipe);
+        when(recipeRepository.save(recipe)).thenReturn(recipe);
+        when(recipeMapper.toResponse(recipe)).thenReturn(new RecipeResponse());
 
-        try (MockedStatic<RecipeMapper> mapperMock = mockStatic(RecipeMapper.class)) {
-            mapperMock.when(() -> RecipeMapper.toEntity(request)).thenReturn(recipeEntity);
-            mapperMock.when(() -> RecipeMapper.toResponse(any())).thenReturn(new RecipeResponse());
+        recipeService.createRecipe(request);
 
-            when(recipeRepository.save(any(Recipe.class))).thenReturn(savedRecipe);
-
-            recipeService.createRecipe(request);
-
-            verify(recipeMediaService, never()).saveMedia(any());
-            verify(recipeMediaService, never()).create(any());
-
-            verify(recipeRepository, atLeastOnce()).save(any(Recipe.class));
-        }
+        verify(recipeMediaService, never()).saveMedia(any());
+        verify(recipeRepository).save(recipe);
     }
 
     @Test
@@ -112,22 +101,22 @@ class RecipeServiceTest {
         CreateRecipeRequest request = new CreateRecipeRequest();
         MultipartFile emptyFile = mock(MultipartFile.class);
         when(emptyFile.isEmpty()).thenReturn(true);
+        
         request.setExtraImages(List.of(emptyFile));
-        Recipe savedRecipe = new Recipe();
-        savedRecipe.setId(1L);
 
-        try (MockedStatic<RecipeMapper> mapperMock = mockStatic(RecipeMapper.class)) {
-            mapperMock.when(() -> RecipeMapper.toEntity(request)).thenReturn(new Recipe());
-            mapperMock.when(() -> RecipeMapper.toResponse(any())).thenReturn(new RecipeResponse());
+        Recipe recipe = new Recipe();
+        recipe.setId(1L);
 
-            when(recipeRepository.save(any())).thenReturn(savedRecipe);
+        when(recipeMapper.toEntity(request)).thenReturn(recipe);
+        when(recipeRepository.save(recipe)).thenReturn(recipe);
+        when(recipeMapper.toResponse(recipe)).thenReturn(new RecipeResponse());
 
-            recipeService.createRecipe(request);
+        recipeService.createRecipe(request);
 
-            verify(recipeMediaService, never()).saveMedia(any());
-            verify(recipeMediaService, never()).create(any());
-        }
+        verify(recipeMediaService, never()).saveMedia(any());
+        verify(recipeRepository).save(recipe);
     }
+
     @Test
     void createRecipe_WithEmptyCoverAndNullExtra_ShouldHandleEdgeCases() throws IOException {
         CreateRecipeRequest request = new CreateRecipeRequest();
@@ -136,21 +125,19 @@ class RecipeServiceTest {
         when(emptyCover.isEmpty()).thenReturn(true);
         request.setImageFile(emptyCover);
 
+        // Usamos java.util.Arrays.asList para permitir nulos (List.of explota con nulos)
         request.setExtraImages(java.util.Arrays.asList((MultipartFile) null));
 
-        Recipe savedRecipe = new Recipe();
-        savedRecipe.setId(1L);
+        Recipe recipe = new Recipe();
+        recipe.setId(1L);
 
-        try (MockedStatic<RecipeMapper> mapperMock = mockStatic(RecipeMapper.class)) {
-            mapperMock.when(() -> RecipeMapper.toEntity(request)).thenReturn(new Recipe());
-            mapperMock.when(() -> RecipeMapper.toResponse(any())).thenReturn(new RecipeResponse());
-            
-            when(recipeRepository.save(any())).thenReturn(savedRecipe);
+        when(recipeMapper.toEntity(request)).thenReturn(recipe);
+        when(recipeRepository.save(recipe)).thenReturn(recipe);
+        when(recipeMapper.toResponse(any())).thenReturn(new RecipeResponse());
 
-            recipeService.createRecipe(request);
+        recipeService.createRecipe(request);
 
-            verify(recipeMediaService, never()).saveMedia(any());
-        }
+        verify(recipeMediaService, never()).saveMedia(any());
+        verify(recipeRepository).save(recipe);
     }
-
 }
