@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,81 +30,69 @@ import com.kume.kume.presentation.mappers.RecipeMapper;
 import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor // Esto crea el constructor para los 'final' automáticamente
 public class RecipeService {
+
     private final RatingService ratingService;
-    // private final RecipeMapper recipeMapper;
-    @Autowired
     private final RecipeRepository recipeRepository;
-
-    @Autowired
     private final RecipeMediaService recipeMediaService;
+    private final RecipeMapper recipeMapper;
 
+    // =========================================================================
+    // MÉTODO REFACTORIZADO (SINGLE SAVE)
+    // =========================================================================
     @Transactional
-public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws IOException {
+    public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws IOException {
+        
+        // 1. Mapear y GUARDAR (Único Save explícito)
+        Recipe recipe = recipeMapper.toEntity(request);
+        Recipe savedRecipe = recipeRepository.save(recipe); // <--- ESTE ES EL ÚNICO SAVE
 
-    // 1. Mapear receta sin imágenes aún
-    Recipe recipe = RecipeMapper.toEntity(request);
-
-    // 2. Guardar receta primero (para obtener ID)
-    Recipe savedRecipe = recipeRepository.save(recipe);
-
-    // ============================================================
-    // 3. GUARDAR IMAGEN PRINCIPAL
-    // ============================================================
-    MultipartFile cover = request.getImageFile();
-
-    if (cover != null && !cover.isEmpty()) {
-
-        String filename = recipeMediaService.saveMedia(cover); // guarda en /uploads/recipes
-
-        savedRecipe.setImageUrl(filename);
-    }
-
-    // ============================================================
-    // 4. GUARDAR IMÁGENES EXTRAS
-    // ============================================================
-    if (request.getExtraImages() != null) {
-        for (MultipartFile file : request.getExtraImages()) {
-
-            if (file == null || file.isEmpty()) continue;
-
-            String filename = recipeMediaService.saveMedia(file);
-
-            RecipeMediaType type = resolveMediaType(file.getContentType());
-
-            RecipeMediaDTO dto = RecipeMediaDTO.builder()
-                    .recipeId(savedRecipe.getId())
-                    .mediaUrl(filename)
-                    .mediaType(type)
-                    .build();
-
-            recipeMediaService.create(dto);
+        // 2. Procesar imagen de portada
+        MultipartFile cover = request.getImageFile();
+        if (cover != null && !cover.isEmpty()) {
+            String filename = recipeMediaService.saveMedia(cover);
+            savedRecipe.setImageUrl(filename); 
+            // JPA detecta este cambio automáticamente al cerrar la transacción.
+            // NO hace falta llamar a save() otra vez.
         }
+
+        // 3. Procesar imágenes extras
+        if (request.getExtraImages() != null) {
+            for (MultipartFile file : request.getExtraImages()) {
+                if (file == null || file.isEmpty()) continue;
+
+                String filename = recipeMediaService.saveMedia(file);
+                RecipeMediaType type = resolveMediaType(file.getContentType());
+
+                RecipeMediaDTO dto = RecipeMediaDTO.builder()
+                        .recipeId(savedRecipe.getId())
+                        .mediaUrl(filename)
+                        .mediaType(type)
+                        .build();
+
+                recipeMediaService.create(dto);
+            }
+        }
+
+        // 4. Retornar respuesta
+        return Result.success(
+                "Receta creada exitosamente",
+                recipeMapper.toResponse(savedRecipe)
+        );
     }
-
-    // 5. Guardar cambios finales (URL de portada actualizada)
-    Recipe updated = recipeRepository.save(savedRecipe);
-
-    return Result.success(
-            "Receta creada exitosamente",
-            RecipeMapper.toResponse(updated)
-    );
-}
-
+    // =========================================================================
 
     @Transactional(readOnly = true)
     public Result<List<RecipeResponse>> getAllRecipes() {
         List<RecipeResponse> recipes = recipeRepository.findAll().stream()
-                .map(RecipeMapper::toResponse)
+                .map(recipeMapper::toResponse)
                 .collect(Collectors.toList());
-
         return Result.success("Recetas encontradas exitosamente", recipes);
     }
 
     @Transactional(readOnly = true)
     public Result<RecipeResponse> getRecipeById(Long id) {
-
         Optional<Recipe> recipeOpt = recipeRepository.findById(id);
 
         if (recipeOpt.isEmpty()) {
@@ -113,34 +100,27 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
         }
 
         Recipe recipe = recipeOpt.get();
+        RecipeResponse dto = recipeMapper.toResponse(recipe);
 
-        // RecipeResponse dto = recipeMapper.toResponse(recipe);
-        RecipeResponse dto = RecipeMapper.toResponse(recipe);
-
-        // ⭐ Obtener promedio
         double avg = ratingService.getAverageRating(recipe.getId());
         dto.setAverageRating(avg);
 
-        // ⭐ Obtener conteos por estrella
         Map<Integer, Long> counts = ratingService.getRatingCounts(recipe.getId());
         dto.setRatingCounts(counts);
 
-        // ⭐ Valoración del usuario activo (si no tienes login, pon un userId fijo temporal)
-        Long loggedUserId = 1L; // temporal, igual que en los comentarios
+        Long loggedUserId = 1L; 
         Optional<Rating> userRatingOpt = ratingService.getUserRating(loggedUserId, recipe.getId());
         dto.setUserRating(userRatingOpt.map(Rating::getStars).orElse(null));
 
         return Result.success("OK", dto);
     }
 
-
     @Transactional(readOnly = true)
     public Result<List<RecipeResponse>> getRecipeByName(String name) {
         List<RecipeResponse> recipes = recipeRepository.findByName(name)
                 .stream()
-                .map(RecipeMapper::toResponse)
+                .map(recipeMapper::toResponse)
                 .collect(Collectors.toList());
-
         return Result.success("Receta encontrada exitosamente", recipes);
     }
 
@@ -148,9 +128,8 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
     public Result<List<RecipeResponse>> getRecipesByDifficulty(String difficulty) {
         List<RecipeResponse> recipes = recipeRepository.findByDifficulty(difficulty.toUpperCase())
                 .stream()
-                .map(RecipeMapper::toResponse)
+                .map(recipeMapper::toResponse)
                 .collect(Collectors.toList());
-
         return Result.success("Recetas encontradas exitosamente", recipes);
     }
 
@@ -161,10 +140,10 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
         if (!existingRecipe.isPresent())
             Result.failure("Receta no encontrada");
 
-        Recipe updatedRecipe = RecipeMapper.updateEntity(existingRecipe.get(), request);
+        Recipe updatedRecipe = recipeMapper.updateEntity(existingRecipe.get(), request);
         Recipe savedRecipe = recipeRepository.save(updatedRecipe);
 
-        return Result.success("Receta actualizada exitosamente", RecipeMapper.toResponse(savedRecipe));
+        return Result.success("Receta actualizada exitosamente", recipeMapper.toResponse(savedRecipe));
     }
 
     @Transactional
@@ -172,15 +151,6 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
         recipeRepository.deleteById(id);
     }
 
-    /**
-     * Simula la búsqueda de recetas aplicando varios filtros.
-     * 
-     * @param query      Texto libre para buscar en nombre o ingredientes.
-     * @param type       Tipo de cocina (e.g., "Mexicana", "Italiana").
-     * @param country    País de origen.
-     * @param difficulty Nivel de dificultad.
-     * @return Lista de RecipeResponse filtradas.
-     */
     @Transactional(readOnly = true)
     public Result<List<RecipeResponse>> searchRecipes(String query, String type, String country,
             DifficultyLevel difficulty) {
@@ -190,7 +160,7 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
         List<RecipeResponse> recipes = recipeRepository
                 .findAllWithDetails()
                 .stream()
-                .map(RecipeMapper::toResponse)
+                .map(recipeMapper::toResponse)
                 .filter(recipe -> lowerCaseQuery.isEmpty() ||
                         recipe.getName().toLowerCase().contains(lowerCaseQuery) ||
                         recipe.getIngredients().stream().anyMatch(
@@ -203,33 +173,26 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
         return Result.success("Recetas encontradas exitosamente", recipes);
     }
 
+    // Este método ya no se usa en createRecipe refactorizado (porque delegamos al servicio), 
+    // pero lo dejo por si lo usas en otro lado.
     private List<String> saveMediaFiles(List<MultipartFile> files) {
         if (files == null) {
             return List.of();
         }
-
         List<String> finalPaths = new ArrayList<>();
-
         for (MultipartFile file : files) {
-            if (file.isEmpty())
-                continue;
-
+            if (file.isEmpty()) continue;
             try {
                 String uploadDir = "uploads/recipes/";
                 Files.createDirectories(Paths.get(uploadDir));
-
                 String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
                 Path fullPath = Paths.get(uploadDir, filename);
-
                 Files.copy(file.getInputStream(), fullPath, StandardCopyOption.REPLACE_EXISTING);
-
                 finalPaths.add(fullPath.toString());
-
             } catch (IOException ex) {
                 throw new RuntimeException("Error guardando archivo: " + file.getOriginalFilename(), ex);
             }
         }
-
         return finalPaths;
     }
 
@@ -237,16 +200,12 @@ public Result<RecipeResponse> createRecipe(CreateRecipeRequest request) throws I
         if (contentType == null) {
             return RecipeMediaType.IMAGE;
         }
-
         if (contentType.startsWith("image/")) {
             return RecipeMediaType.IMAGE;
         }
-
         if (contentType.startsWith("video/")) {
             return RecipeMediaType.VIDEO;
         }
-
         return RecipeMediaType.IMAGE;
     }
-
 }
