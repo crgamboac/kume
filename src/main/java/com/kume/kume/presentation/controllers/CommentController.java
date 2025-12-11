@@ -74,11 +74,4 @@ public class CommentController {
         commentService.rateComment(commentId, userId, userOption);
         return "redirect:/recipes/" + recipeId;
     }
-
-
-
-
-
-
-
 }
