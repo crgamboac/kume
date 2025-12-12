@@ -95,7 +95,7 @@ public class RecipeMapper {
         existingRecipe.setCookingTime(request.getCookingTime());
         existingRecipe.setDifficulty(request.getDifficulty());
         existingRecipe.setImageUrl(request.getImageUrl());
-        existingRecipe.setIngredients(request.getIngredients());
+        existingRecipe.setIngredients(Set.copyOf(request.getIngredients()));
         return existingRecipe;
     }
 
