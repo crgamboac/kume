@@ -11,3 +11,20 @@
 		#c9d6ff
 	); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 }
+
+
+.banner-img-custom {
+    max-height: 250px;
+    object-fit: cover;
+}
+
+.acciones-table-header{
+width: 160px
+}
+
+.recipe-image{
+	max-height: 400px; width: 100%; object-fit: cover
+}
+.recipe-image-detail{
+	height: 250px; width: 100%; object-fit: cover
+}
