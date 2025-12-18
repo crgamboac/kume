@@ -127,7 +127,7 @@ class CommentControllerTest {
     // ---------------------------------------------------------
     @Test
     void testRateComment() throws Exception {
-
+        
         doNothing()
                 .when(commentService)
                 .rateComment(12L, 5L, true);
